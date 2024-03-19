@@ -1,13 +1,22 @@
 import streamlit as st
-from langchain.llms import OpenAI
+from openai import OpenAI
 
 st.title('Hermes 2 Pro on MLX - Tool Use')
 
-openai_api_key = st.sidebar.text_input('OpenAI API Key', type='password')
+# Point to the local server
+client = OpenAI(base_url="http://localhost:5000", api_key="not-needed")
 
-def generate_response(input_text):
-    llm = OpenAI(temperature=0.7, openai_api_key=openai_api_key)
-    st.info(llm(input_text))
+completion = client.chat.completions.create(
+  model="local-model", # this field is currently unused
+  messages=[
+    {"role": "system", "content": "Always answer in rhymes."},
+    {"role": "user", "content": "Introduce yourself."}
+  ],
+  temperature=0.7,
+  )
+
+# Print the response
+print(completion.choices[0].message)
 
 with st.chat_message('Hello!'):
     st.text('This is a chat message')
