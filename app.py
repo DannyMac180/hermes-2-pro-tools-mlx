@@ -1,7 +1,13 @@
-from mlxserver import MLXServer
 import streamlit as st
+from langchain.llms import OpenAI
 
-server = MLXServer(model="NousResearch/Hermes-2-Pro-Mistral-7B")
+st.title('Hermes 2 Pro on MLX - Tool Use')
 
-with st.chat_message("user"):
-    st.write("Hello 👋")
+openai_api_key = st.sidebar.text_input('OpenAI API Key', type='password')
+
+def generate_response(input_text):
+    llm = OpenAI(temperature=0.7, openai_api_key=openai_api_key)
+    st.info(llm(input_text))
+
+with st.chat_message('Hello!'):
+    st.text('This is a chat message')
