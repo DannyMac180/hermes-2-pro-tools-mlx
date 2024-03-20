@@ -4,7 +4,7 @@ from openai import OpenAI
 st.title('Hermes 2 Pro on MLX - Tool Use')
 
 # Point to the local server
-client = OpenAI(base_url="http://localhost:5000", api_key="not-needed")
+client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed")
 
 completion = client.chat.completions.create(
   model="local-model", # this field is currently unused
