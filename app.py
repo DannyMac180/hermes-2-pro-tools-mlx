@@ -44,7 +44,10 @@ if prompt := st.chat_input("What is up?"):
 
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
-        response = agent.run(prompt)
-        st.markdown(response)
-    st.session_state.messages.append({ "system": system_message, "role": "assistant", "content": response})
-
+        with st.spinner("Reasoning..."):
+            try:
+                response = agent.run(prompt)
+                st.markdown(response)
+                st.session_state.messages.append({"system": system_message, "role": "assistant", "content": response})
+            except Exception as e:
+                st.error(f"An error occurred: {str(e)}")
