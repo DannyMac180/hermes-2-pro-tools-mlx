@@ -2,3 +2,5 @@ streamlit
 openai
 langchain
 langchain_exa
+langchainhub
+langchain_openai
