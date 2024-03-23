@@ -1,26 +1,39 @@
-import os
-from dotenv import load_dotenv
 import streamlit as st
-from langchain.agents import initialize_agent, tool
-from langchain.llms import OpenAI
-from langchain_core.messages import SystemMessage
-from exa_py import Exa
-load_dotenv()
+from langchain_core.tools import tool
+from langchain import hub
+from langchain.agents import AgentExecutor, create_openai_tools_agent 
+from langchain_openai import ChatOpenAI
 
 st.title('Hermes 2 Pro on MLX - Tool Use')
 
 # Point to the local server
-client = OpenAI(base_url="http://localhost:1234/v1", api_key="not-needed")
+llm = ChatOpenAI(base_url="http://localhost:1234/v1", api_key="not-needed")
 
-exa = Exa(os.environ['EXA_API_KEY'])
+# Get the prompt to use - you can modify this!
+prompt = hub.pull("hwchase17/openai-tools-agent")
 
 @tool
-def search(query: str):
-    """Search for a webpage based on the query."""
-    return exa.search(f"{query}", use_autoprompt=True, num_results=5)
+def multiply(first_int: int, second_int: int) -> int:
+    """Multiply two integers together."""
+    return first_int * second_int
 
-tools = [search]
-agent = initialize_agent(tools, client, agent='zero-shot-react-description', verbose=True, handle_parsing_errors=True)
+@tool
+def add(first_int: int, second_int: int) -> int:
+    "Add two integers."
+    return first_int + second_int
+
+@tool
+def exponentiate(base: int, exponent: int) -> int:
+    "Exponentiate the base to the exponent power."
+    return base**exponent
+
+tools = [multiply, add, exponentiate]
+
+# Construct the OpenAI Tools agent
+agent = create_openai_tools_agent(llm, tools, prompt)
+
+# Create an agent executor by passing in the agent and tools
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -38,16 +51,12 @@ if prompt := st.chat_input("What is up?"):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    system_message = SystemMessage(
-      content="You are a an AI assistant built on top of the Hermes 2 Pro LLM built by Nous Research. You have the ability to use the 'search' tool to search the web when appropriate."
-    )
-
     # Display assistant response in chat message container
     with st.chat_message("assistant"):
         with st.spinner("Reasoning..."):
             try:
-                response = agent.run(prompt)
+                response = agent_executor.invoke({"input": prompt})
                 st.markdown(response)
-                st.session_state.messages.append({"system": system_message, "role": "assistant", "content": response})
+                st.session_state.messages.append({"role": "assistant", "content": response})
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
